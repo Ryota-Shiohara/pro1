@@ -9,16 +9,30 @@ int main() {
     for (i = 0; i < MAX_NUM; i++) {
         a[i] = i + 1;
     }
+
+    a[0] = 0;
     
-    for (j = 2; i <= MAX_NUM / 2; i++) {
+    for (j = 2; j <= MAX_NUM / 2; j++) {
         if (a[j - 1] == 0) {
             continue;
         } else {
             for (i = j; i < MAX_NUM; i++) {
-                if (a[i] % j - 1)
+                if (a[i] % j == 0) {
+                    a[i] = 0;
+                } else {
+                    continue;
+                }
             }
         }
         
+    }
+
+    for (i = 0; i < MAX_NUM; i++) {
+        if (a[i] == 0) {
+            continue;
+        } else {
+            printf("%d   ", a[i]);
+        }
     }
     printf("\n");
 
