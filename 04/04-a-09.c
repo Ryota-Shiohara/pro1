@@ -1,3 +1,16 @@
+/* 
+after p = a, *p and *(p + 1)? 5 4
+O
+after q = *p++, *p and q? 4 5
+O
+after p = &a[2]; q = ++*p, *p and q? 4 4
+O
+after q = *++p, *p and q? 2 2
+O
+
+B)が正しい
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5,7 +18,7 @@ void check_answer(int, int);
 
 int main()
 {
-    int *p, q, a[] = {1, 2, 3, 4, 5};
+    int *p, q, a[] = {5, 4, 3, 2, 1};
 
     p = a;
     printf("after p = a, *p and *(p + 1)? ");
