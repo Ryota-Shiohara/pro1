@@ -1,4 +1,7 @@
 /* explain why this code is incorrect.
+inputで正常でない値が入力されると、nullを返して関数が終了するが、
+このときfree(p)はnullを解放することになり、本来のpを解放することができない。
+よってメモリが解放されないままプログラムが終了する。
 */
 #include <stdio.h>
 #include <stdlib.h>

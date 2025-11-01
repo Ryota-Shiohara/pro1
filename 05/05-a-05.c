@@ -27,19 +27,33 @@ int main() {
     c = p1.x * p2.y - p2.x * p1.y;
 
     if (a == 0) {
-        //なにもしない        
+        //なにもしない 
+ 
     } else if (a == 1) {
         printf("x");
+        if (b == 1 || b > 0) {
+            printf("+");
+        }   
+    }else if (a == -1) {
+        printf("-x");
+        if (b == 1 || b > 0) {
+            printf("+");
+        }   
     } else {
         printf("%fx", a);
+        if (b == 1 || b > 0) {
+            printf("+");
+        }   
     } 
 
     if (b == 0) {
         //なにもしない        
     } else if (b == 1) {
-        printf("+y");
+        printf("y");
+    } else if (b == -1) {
+        printf("-y");
     } else if (b > 0) {
-        printf("+%fy", b);
+        printf("%fy", b);
     } else if (b < 0) {
         printf("-%fy", -b);
     }

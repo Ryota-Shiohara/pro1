@@ -1,4 +1,32 @@
 /* copy & paste the execution result here.
+in foo: p.x? 4
+O
+in foo: p.y? 6
+O
+in main, after foo(): p.x? 3
+O
+in main, after foo(): p.y? 5
+O
+in main, after foo(): q.x? 4
+O
+in main, after foo(): q.y? 6
+O
+in bar: p->x? 4
+O
+in bar: p->y? 6
+O
+in main, after bar(): p.x? 4
+O
+in main, after bar(): p.y? 6
+O
+in main, after r->x++; r->y++: r->x? 5
+O
+in main, after r->x++; r->y++: r->y? 7
+O
+in main, after r->x++; r->y++: p.x? 5
+O
+in main, after r->x++; r->y++: p.y? 7
+O
 */
 
 #include <stdio.h>

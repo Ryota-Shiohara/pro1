@@ -1,4 +1,9 @@
 /* explain why this code is incorrect.
+q＝pでqにpの示す構造体本体を渡しているように見えるが、
+ここではポインタpの値を渡しているため、
+qには構造体pの先頭アドレスが入っている。
+ここで、pを解放してしまうと、そこには構造体が存在しなくなるため、
+print_point(q)で変なデータが出力されてしまう。
 */
 #include <stdio.h>
 #include <stdlib.h>

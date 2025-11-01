@@ -1,4 +1,6 @@
 /* explain why this code is incorrect.
+malloc でメモリを確保したのにも関わらず、使用後にメモリを開放していない。
+動的にメモリを確保している意味がない。
 */
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,6 @@
 /* explain why this code is incorrect.
+free(p)で確保したメモリを解放した後に、再度メモリpにアクセスし用いている。
+print_point(p)を実行した後に解放すべきである。
 */
 #include <stdio.h>
 #include <stdlib.h>

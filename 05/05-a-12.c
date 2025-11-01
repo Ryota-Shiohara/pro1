@@ -1,4 +1,8 @@
 /* explain why this code is incorrect.
+set_pointで（1, 3）を設置しているものの、
+そのアドレスがどこにあるか示すポインタはset_point内で定義されているため、
+関数が終了するとポインタが消失し、main関数で用いることができなくなる
+結果としてメモリの解放も行えなくなってしまう。
 */
 #include <stdio.h>
 #include <stdlib.h>
