@@ -4,7 +4,8 @@
 struct data_t {
     struct data_t *bp;
     struct data_t *fp;
-    int data;
+    int key;
+    int value;
 };
 
 struct data_t* init() {
@@ -22,31 +23,26 @@ void insert(struct data_t* p, struct data_t* w) {
     p->bp = w;
 }
 
-struct data_t* insert_pos(struct data_t* p, struct data_t* w) {
+struct data_t* insert_pos(struct data_t* p, int key) {
     struct data_t* pos;
     for (pos = p->fp;pos != p; pos = pos->fp) {
-        if (pos->data >= w->data) {
+        if (pos->key == key) {
+            pos->value++;
+            return NULL;
+        } else if (pos->key > key) {
             break;
         }
     }
     return pos;
 }
 
-void printasc(struct data_t* p) {
+void printall(struct data_t* p) {
     struct data_t* fp;
     for (fp=p->fp; fp!=p; fp=fp->fp) {
-        printf("%d", fp->data);
+        printf("[%d] : %d\n", fp->key, fp->value);
     }
-    printf("\n");
 }
 
-void printdsc(struct data_t* p) {
-    struct data_t* bp;
-    for (bp=p->bp; bp!=p; bp=bp->bp) {
-        printf("%d", bp->data);
-    }
-    printf("\n");
-}
 
 
 int main() {
@@ -55,14 +51,18 @@ int main() {
 
     head = init();
     for (;scanf("%d", &d) != EOF;) {
-        w = (struct data_t*)malloc(sizeof(struct data_t));
-        w->data = d;
-        pos = insert_pos(head, w);
-        insert(pos, w);
+        
+        pos = insert_pos(head, d);
+        if (pos != NULL) {
+            w = (struct data_t*)malloc(sizeof(struct data_t));
+            w->key = d;
+            w->value = 1;
+            insert(pos, w);
+        }
+        
     }
 
-    printasc(head);
-    printdsc(head);
+    printall(head);
 
     return 0;
 }
