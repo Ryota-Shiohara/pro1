@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void print_seq(int number) {
+    printf("%d ", number);
+    if (number > 1) {
+        print_seq(number - 1);
+    }
+    
+}
+
+int main() {
+    int max;
+    printf("input a positive number: ");
+    scanf("%d", &max);
+    print_seq(max);
+    printf("\n");
+
+    return 0;
+}
