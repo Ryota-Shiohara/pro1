@@ -4,8 +4,6 @@
 
 int main(int argc, char *argv[]) {
     FILE *from, *to;
-    long start;
-    int i, c;
     char *fromName = argv[1];
     char *toName = argv[2];
     
@@ -19,18 +17,27 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    start = ftell(from);
     fseek(from, 0, SEEK_END);
+    long current_pos = ftell(from) - 1;
 
-    while (ftell(from)) {
-        while(fgetc(from) != "\n") {
-            fseek(from, -1, SEEK_CUR);
-        }
+    while (current_pos >= 0) {
+        fseek(from, current_pos, SEEK_SET);
+        int c = fgetc(from);
+        if (c == '\n' || current_pos == 0) {
+            long line_start_pos;
+            if (current_pos == 0) {
+                line_start_pos = 0;
+            } else {
+                line_start_pos = current_pos + 1;
+            }
+            fseek(from, line_start_pos, SEEK_SET);
 
-        char buffer[80];
-        while (fgets(buffer, 80, from) != NULL) {
-            fputs(buffer, to);
+            char buffer[80];
+            if (fgets(buffer, 80, from) != NULL) {
+                fputs(buffer, to);
+            }
         }
+        current_pos--;
     }
     
     fclose(from);
