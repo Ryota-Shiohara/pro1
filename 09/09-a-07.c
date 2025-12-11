@@ -9,8 +9,8 @@ int main(int argc, char *argv[]) {
     char *fileName = "09-a-07.csv";
     char info[256];
     int flg = 0;
-    long male[25] = {};
-    long female[25] = {};
+    long male[25] = {0};
+    long female[25] = {0};
     int i, j;
 
 
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     }
 
     while (fgets(info, 255, fp)!=NULL) {
-        char city[16] = {};
+        char city[16] = {0};
         char sex;
         sscanf(info, "%15[^,\n]", city);
         if (strcmp(city, cityName) == 0) {
