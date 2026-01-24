@@ -5,6 +5,8 @@ BIT_W = 32                           # bit width of CPU
 BIT_MASK = 2**BIT_W - 1             # Bit mask for BIT_W
 BIT_FMAT = "0" + str(BIT_W) + "b"   # Output format string
 
+L1MISS_PENALTY = 100
+
 # ALU selection signal definition
 ALU_S_ADD = 0b000 #0
 ALU_S_SUB = 0b001 #1
@@ -234,7 +236,10 @@ def datapath():
         else:
             PC = PC + 4
 
-        cycle = cycle + 1
+        if (opcode.bstring == "0000011" or opcode.bstring == "0100011"):
+            cycle = cycle + 1 + L1MISS_PENALTY
+        else:
+            cycle = cycle + 1        
 
         # for debuging
         utils.print_reg(reg)
