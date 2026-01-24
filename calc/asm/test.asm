@@ -8,7 +8,7 @@
 	addi x8, x0, 4
 	lw x9, x8, 0
 	lw x10, x4, 0
-	addi x14, x0, 20
+	addi x14, x0, 8
 	sw x5, x14, 0
 	sw x6, x14, 4
 	sw x7, x14, 8
