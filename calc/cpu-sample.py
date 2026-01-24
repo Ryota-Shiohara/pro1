@@ -77,53 +77,67 @@ def reg_write(A3, WE, WD3):
 def main_decoder(opcode):
     if (opcode.bstring == "0110011"): # R-Type 
         Branch = 0
-        ResultSrc = 0
+        ResultSrc = 0b00
         MemWrite = 0
         ALUSrc  = 0
         ImmSrc = 0b00
         RegWrite = 1
         ALUOp = 0b10
+        JumpPCSrc = 0b0
 
     elif (opcode.bstring == "0000011"): # lw instrunction
         # write your own code here #
         Branch = 0
-        ResultSrc = 1
+        ResultSrc = 0b01
         MemWrite = 0
         ALUSrc  = 1
         ImmSrc = 0b00
         RegWrite = 1
         ALUOp = 0b00
+        JumpPCSrc = 0b0
         
     elif (opcode.bstring == "0010011"): # I-type
         Branch = 0
-        ResultSrc = 0
+        ResultSrc = 0b00
         MemWrite = 0
         ALUSrc  = 1
         ImmSrc = 0b00
         RegWrite = 1
         ALUOp = 0b10
+        JumpPCSrc = 0b0
 
         
     elif (opcode.bstring == "0100011"): # S-type
         Branch = 0
-        ResultSrc = 0 #d
+        ResultSrc = 0b00
         MemWrite = 1
         ALUSrc  = 1
         ImmSrc = 0b01
         RegWrite = 0
         ALUOp = 0b00
+        JumpPCSrc = 0b0
 
     elif (opcode.bstring == "1100011"): # B-type
         Branch = 1
-        ResultSrc = 0 #d
+        ResultSrc = 0b00
         MemWrite = 0
         ALUSrc  = 0
         ImmSrc = 0b10
         RegWrite = 0
         ALUOp = 0b01
+        JumpPCSrc = 0b0
 
+    elif (opcode.bstring == "1101111"):
+        Branch = 1
+        ResultSrc = 0b10
+        MemWrite = 0
+        ALUSrc = 0
+        ImmSrc = 0b11
+        RegWrite = 1
+        ALUOp = 0b00
+        JumpPCSrc = 0b0
 
-    return Branch, ResultSrc, MemWrite, ALUSrc, ImmSrc, RegWrite, ALUOp
+    return Branch, ResultSrc, MemWrite, ALUSrc, ImmSrc, RegWrite, ALUOp, JumpPCSrc
 
 def alu_decoder(ALUOp, opcode, funct7, funct3):
     if (ALUOp == 0b00):         # load or store 
@@ -152,10 +166,11 @@ def alu_decoder(ALUOp, opcode, funct7, funct3):
 
     return ALUControl
 
-def S_Ext(ImmSrc, funct7, rs2, rd):
+def S_Ext(ImmSrc, funct7, rs2, rd, inst):
     imm_Itype = funct7.concat(rs2)
     imm_Stype = funct7.concat(rd)
     imm_Btype = utils.Wire(funct7.get_bits(6, 6), 1).concat(utils.Wire(rd.get_bits(0, 0), 1)).concat(utils.Wire(funct7.get_bits(5, 0), 6)).concat(utils.Wire(rd.get_bits(4, 1), 4)).concat(utils.Wire(0, 1))
+    imm_JByte = utils.Wire(inst.get_bits(31, 31), 1).concat(utils.Wire(inst.get_bits(19, 12), 8)).concat(utils.Wire(inst.get_bits(20, 20), 1)).concat(utils.Wire(inst.get_bits(30, 21), 10)).concat(utils.Wire(0, 1))
     
     if (ImmSrc == 0b00):
         imm = imm_Itype
@@ -163,6 +178,8 @@ def S_Ext(ImmSrc, funct7, rs2, rd):
         imm = imm_Stype
     elif (ImmSrc == 0b10):
         imm = imm_Btype
+    elif (ImmSrc == 0b11):
+        imm = imm_JByte
     else:
         print("Unsupported ImmSrc")
 
@@ -196,7 +213,7 @@ def datapath():
             quit()
 
         # main decoder routine
-        Branch, ResultSrc, MemWrite, ALUSrc, ImmSrc, RegWrite, ALUOp = main_decoder(opcode)
+        Branch, ResultSrc, MemWrite, ALUSrc, ImmSrc, RegWrite, ALUOp, JumpPCSrc = main_decoder(opcode)
 
         # ALU decoder routine
         ALUControl = alu_decoder(ALUOp, opcode, funct7, funct3)
@@ -205,7 +222,7 @@ def datapath():
         d1, d2 = reg_read(rs1, rs2)
         
         # generate immediate value (suppoted ImmSrc = 00 or 01 or 10)
-        imm = S_Ext(ImmSrc, funct7, rs2, rd)
+        imm = S_Ext(ImmSrc, funct7, rs2, rd, inst)
 
         # AlU input source selection
         A = d1
@@ -222,17 +239,22 @@ def datapath():
             res_dmem = dmem_access(res_alu, MemWrite, d2)
 
         # Result source selection
-        if (ResultSrc == 0):
+        if (ResultSrc == 0b00):
             wd3 = res_alu # write your own code here #
-        else:
+        elif (ResultSrc == 0b01):
             wd3 = res_dmem # write your own code here #
+        elif (ResultSrc == 0b10):
+            wd3 = PC + utils.Wire(4, BIT_W)
 
         # write register file
         reg_write(rd, RegWrite, wd3)
 
         # Next PC calculation
-        if ((Branch == 1 and zero == 1 and funct3.bstring == "000") or (Branch == 1 and zero == 0 and funct3.bstring == "001")):
-            PC = PC + imm
+        if ((Branch == 1 and zero == 1 and funct3.bstring == "000") or (Branch == 1 and zero == 0 and funct3.bstring == "001") or (opcode.bstring == "1101111")):
+            if  (JumpPCSrc == 0b0):
+                PC = PC + imm
+            elif (JumpPCSrc == 0b1):
+                PC = d1 + imm
         else:
             PC = PC + 4
 
