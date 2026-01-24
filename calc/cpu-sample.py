@@ -186,6 +186,16 @@ def main_decoder(opcode):
         ALUOp = 0b00
         JumpPCSrc = 0b0
 
+    elif (opcode.bstring == "1100111"):
+        Branch = 0
+        ResultSrc = 0b10
+        MemWrite = 0
+        ALUSrc = 1
+        ImmSrc = 0b00
+        RegWrite = 1
+        ALUOp = 0b00
+        JumpPCSrc = 0b1
+
     return Branch, ResultSrc, MemWrite, ALUSrc, ImmSrc, RegWrite, ALUOp, JumpPCSrc
 
 def alu_decoder(ALUOp, opcode, funct7, funct3):
@@ -311,11 +321,11 @@ def datapath():
         reg_write(rd, RegWrite, wd3)
 
         # Next PC calculation
-        if ((Branch == 1 and zero == 1 and funct3.bstring == "000") or (Branch == 1 and zero == 0 and funct3.bstring == "001") or (opcode.bstring == "1101111")):
+        if ((Branch == 1 and zero == 1 and funct3.bstring == "000") or (Branch == 1 and zero == 0 and funct3.bstring == "001") or (opcode.bstring == "1101111") or (opcode.bstring == "1100111")):
             if  (JumpPCSrc == 0b0):
                 PC = PC + imm
             elif (JumpPCSrc == 0b1):
-                PC = d1 + imm
+                PC = d1 + imm  
         else:
             PC = PC + 4
 
