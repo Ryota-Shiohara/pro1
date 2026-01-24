@@ -7,6 +7,12 @@ BIT_FMAT = "0" + str(BIT_W) + "b"   # Output format string
 
 L1MISS_PENALTY = 100
 
+# Cache parameters
+CACHE_SIZE = 16          # Number of cache entries
+CACHE_INDEX_BITS = 4     # log2(CACHE_SIZE)
+CACHE_OFFSET_BITS = 4    # Byte offset bits 
+CACHE_TAG_BITS = BIT_W - CACHE_INDEX_BITS - CACHE_OFFSET_BITS
+
 # ALU selection signal definition
 ALU_S_ADD = 0b000 #0
 ALU_S_SUB = 0b001 #1
@@ -20,6 +26,13 @@ ALU_S_SRA = 0b111 #7 (Shift Right Arithmetic)
 imem = []
 dmem = []
 reg  = [utils.Wire(0, BIT_W)] * 32
+
+# Cache structure: each entry has [valid_bit, tag, data]
+cache = [[0, 0, utils.Wire(0, BIT_W)] for _ in range(CACHE_SIZE)]
+
+# Cache statistics
+cache_hits = 0
+cache_misses = 0
 
 # ALU
 def alu(A, B, S):
@@ -55,13 +68,49 @@ def imem_access(iaddr):
         print("Error: inst memory address not aligned")
     return utils.imem_readword(imem, iaddr)
 
-# Data-memory access function
-def dmem_access(maddr, mwe, Wdata):
-    if (mwe):
+# Cache access function
+def cache_access(maddr, mwe, Wdata):
+    global cache_hits, cache_misses
+    
+    # Extract tag, index, offset from address
+    addr_bits = maddr.unsigned
+    index = (addr_bits >> CACHE_OFFSET_BITS) & ((1 << CACHE_INDEX_BITS) - 1)
+    tag = addr_bits >> (CACHE_OFFSET_BITS + CACHE_INDEX_BITS)
+    
+    # Check cache hit
+    valid = cache[index][0]
+    cache_tag = cache[index][1]
+    cache_data = cache[index][2]
+    
+    if mwe:  # Write operation
+        # Write-through: write to both cache and memory
         utils.dmem_writeword(dmem, maddr, Wdata)
-        return 0
-    else:
-        return utils.dmem_readword(dmem, maddr)
+        cache[index][0] = 1  # Set valid
+        cache[index][1] = tag
+        cache[index][2] = Wdata
+        return 0, True  # Always hit on write (write-through)
+    else:  # Read operation
+        if valid == 1 and cache_tag == tag:
+            # Cache hit!
+            cache_hits += 1
+            print(f"  [Cache HIT] index={index}, tag={hex(tag)}")
+            return cache_data, True
+        else:
+            # Cache miss
+            cache_misses += 1
+            print(f"  [Cache MISS] index={index}, tag={hex(tag)}")
+            # Load from memory
+            data = utils.dmem_readword(dmem, maddr)
+            # Update cache
+            cache[index][0] = 1
+            cache[index][1] = tag
+            cache[index][2] = data
+            return data, False
+
+# Data-memory access function (now uses cache)
+def dmem_access(maddr, mwe, Wdata):
+    data, is_hit = cache_access(maddr, mwe, Wdata)
+    return data, is_hit
 
 # Register file access function
 def reg_read(A1, A2):
@@ -210,6 +259,17 @@ def datapath():
             print("Dumping data memory")
             utils.print_mem(dmem)
             print("Cycle count: ", cycle)
+            
+            # Print cache statistics
+            total_accesses = cache_hits + cache_misses
+            if total_accesses > 0:
+                hit_rate = (cache_hits / total_accesses) * 100
+                print(f"\n=== Cache Statistics ===")
+                print(f"Cache Hits: {cache_hits}")
+                print(f"Cache Misses: {cache_misses}")
+                print(f"Total Accesses: {total_accesses}")
+                print(f"Hit Rate: {hit_rate:.2f}%")
+            
             quit()
 
         # main decoder routine
@@ -235,8 +295,9 @@ def datapath():
         res_alu, zero = alu(A, B, ALUControl)
 
         # Data memory access
+        cache_hit = False
         if (opcode.bstring == "0000011" or opcode.bstring == "0100011"):
-            res_dmem = dmem_access(res_alu, MemWrite, d2)
+            res_dmem, cache_hit = dmem_access(res_alu, MemWrite, d2)
 
         # Result source selection
         if (ResultSrc == 0b00):
@@ -259,7 +320,10 @@ def datapath():
             PC = PC + 4
 
         if (opcode.bstring == "0000011" or opcode.bstring == "0100011"):
-            cycle = cycle + 1 + L1MISS_PENALTY
+            if cache_hit:
+                cycle = cycle + 1  
+            else:
+                cycle = cycle + 1 + L1MISS_PENALTY  
         else:
             cycle = cycle + 1        
 
